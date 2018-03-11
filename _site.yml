@@ -1,0 +1,17 @@
+name: "jason-website"
+output_dir: "."
+navbar:
+  title: "Brant Research Website"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "NCDB"
+      href: NCDB.html
+    - text: "NSQIP"
+      href: NSQIP.html
+
+
+output:
+  html_document:
+    theme: flatly
+    css: style.css
