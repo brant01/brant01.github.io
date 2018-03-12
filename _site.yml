@@ -1,7 +1,7 @@
 name: "jason-website"
 output_dir: "."
 navbar:
-  title: "Brant Research Website"
+  title: "Brant Research"
   left:
     - text: "Home"
       href: index.html
@@ -9,6 +9,8 @@ navbar:
       href: NCDB.html
     - text: "NSQIP"
       href: NSQIP.html
+    - text: "Other"
+      href: Other.html
 
 
 output:
