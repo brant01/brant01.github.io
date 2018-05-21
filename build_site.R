@@ -4,7 +4,7 @@
 
 library("rmarkdown")
 
-setwd("Z:/Brant/Research/Website")
+setwd("I:/Brant/Research/Website")
 
 rmarkdown::render_site()
 
