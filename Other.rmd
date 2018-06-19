@@ -11,7 +11,7 @@ title: "Other Projects"
 
 [2018-03-12 Becker Pain Analysis](../20180312_Becker_Pain.nb.html)
 
-[2018-06-18 Becker Pain Analysis](../20180618_Becker_Pain.nb.html)
+[2018-06-18 Becker Pain Analysis](../20180618_multi.nb.html)
 
 ##Vestibular for Jim
 
