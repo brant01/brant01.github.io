@@ -41,7 +41,7 @@ title: "NCDB"
 
 ###Hemangiopericytoma
 
-1. [2018-06-18 Chordoma](../20180618_Hemangiopericytoma.nb.html) 
+1. [2018-06-18 Hemangiopericytoma](../20180618_Hemangiopericytoma.nb.html) 
 
 ###Meningioma
 
