@@ -55,8 +55,7 @@ title: "NCDB"
 
 1. [2018-06-21 Pituitary Adenoma - Radiation](../20180621_Pit_Aden.nb.html)
 
-2. [2018-07-31 Pituitary Adenoma - 
-Radiation] (../20180731_Pit_Aden.nb.html)
+2. [2018-07-31 Pituitary Adenoma - Radiation](../20180731_Pit_Aden.nb.html)
 
 ###Pituitary Carcinoma
 
