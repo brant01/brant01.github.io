@@ -1,0 +1,268 @@
+---
+title: "CI Database RedCap - Age"
+author: "Jason Brant"
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output:
+  html_notebook:
+    theme: united
+    toc: yes
+    toc_float: yes
+  html_document:
+    toc: yes
+
+---
+
+
+***
+
+<center>
+**Note: To hide the code from this document, click the button in the upper right corner.**
+</center>
+
+***
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("knitr")
+library("tableone")
+library("forcats")
+library("survival")
+library("npsurv")
+library("broom")
+library("tibble")
+library("readr")
+library("stringr")
+library("redcapAPI")
+
+options(width = 120)
+
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+rcon <- redcapConnection(url = 'https://redcap.med.upenn.edu/api/',
+                         token = 'C4DC02D22F24621D2B38B8FC23FE5971')
+
+dat <- exportRecords(rcon, labels = FALSE)
+
+```
+
+
+```{r}
+demo <- dat %>%
+  select(mrn, dob) %>%
+  filter(is.na(dob) == FALSE)
+
+ci_eval <- dat %>%
+  select(mrn, ci_eval_date:hint_5_test_percent_avg_r) %>%
+  filter(is.na(ci_eval_date) == FALSE) %>%
+  select(mrn, ci_eval_date, date_type, test_ear, azbio_q_test_percent,
+         azbio_10_test_percent, azbio_5_test_percent, cnc_w_test_percent,
+         cnc_p_test_percent, hint_q_test_percent_avg, hint_10_test_percent_avg,
+         hint_5_test_percent_avg, qsin_avg_loss)
+
+data <- inner_join(demo, ci_eval, by = "mrn") %>%
+  mutate(age_cand = round(as.numeric(difftime(ci_eval_date, 
+                             dob,
+                             units = "days")/365.25), 2)) %>%
+  mutate(age_cand_f = cut(age_cand, 
+                          c(0, 20, 30, 40, 50, 60, 70, 80, 90, 100))) %>%
+  unique()
+
+ear <- data %>%
+  filter(date_type == "Three Month") %>%
+  select(mrn, test_ear) %>%
+  group_by(mrn) %>%
+  mutate(num_ear = n_distinct(test_ear)) %>%
+  ungroup() %>%
+  unique() %>%
+  filter(num_ear == 1) %>%
+  select(mrn, test_ear)
+
+data <- inner_join(ear, data, by = c("mrn", "test_ear")) %>%
+  gather(test, score, azbio_q_test_percent:qsin_avg_loss) %>%
+  filter(score <= 100)
+
+```
+
+
+```{r}
+# data %>%
+#   filter(date_type == "Candidacy" |
+#            date_type == "One Month" |
+#            date_type == "Three Month" |
+#            date_type == "Six Months" |
+#            date_type == "One Year") %>%
+#   mutate(date_type = factor(date_type)) %>%
+#   ggplot(aes(x = date_type, y = score, color = age_cand_f)) +
+#   geom_boxplot() +
+#   facet_wrap(~test, ncol = 1)
+```
+
+
+## AzBio Quiet
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "azbio_q_test_percent") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+## AzBio 10
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "azbio_10_test_percent") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+
+
+## AzBio 5
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "azbio_5_test_percent") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+## CNC word
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "cnc_w_test_percent") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+## CNC phrase
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "cnc_p_test_percent") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+
+## HINT Quiet
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "hint_q_test_percent_avg") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+
+## HINT 10
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "hint_10_test_percent_avg") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+## HINT 5
+
+```{r}
+data %>%
+  filter(date_type == "Candidacy" |
+           date_type == "One Month" |
+           date_type == "Three Month" |
+           date_type == "Six Months" |
+           date_type == "One Year") %>%
+  mutate(date_type = factor(date_type)) %>%
+  filter(test == "hint_5_test_percent_avg") %>%
+  rename(Age = age_cand_f) %>%
+  ggplot(aes(x = date_type, y = score, color = Age)) +
+  geom_boxplot() +
+  theme(legend.position = "top") +
+  xlab("Test Date Type") +
+  ylab("Score")
+```
+
+#Session Info
+
+```{r}
+print(sessionInfo())
+```
