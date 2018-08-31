@@ -32,6 +32,8 @@ title: "Other Projects"
 
 2. [2018-08-13 PANQOL for O&N Paper](../20180813_PANQOL.nb.html)
 
+3. [2018-08-30 PANQOL for O&N Paper](../20180830_PANQOL.nb.html)
+
 
 ##Vestibular for Jim
 
