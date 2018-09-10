@@ -1,0 +1,1281 @@
+---
+title: "NCDB Acoustic 2015"
+author: "Jason Brant"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    theme: united
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+subtitle: All
+---
+
+***
+
+***
+
+<center>
+**Note: To hide the code from this document, click the button in the upper right corner.**
+</center>
+
+***
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("knitr")
+library("tableone")
+library("forcats")
+library("survival")
+library("npsurv")
+library("broom")
+library("tibble")
+library("readr")
+library("survminer")
+
+
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=TRUE)
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
+
+
+
+col.width <- c(37, 10, 1, 1, 3, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 8, 2, 2, 2, 4, 4, 1, 4, 1, 1, 1, 3, 2, 2, 8,
+               2, 5, 5, 5, 4, 5, 5, 5, 4, 2, 1, 2, 1, 3, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+               3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 8, 8, 8, 2, 1, 1, 1, 1, 8, 1, 1, 8, 1, 1, 2,
+               2, 5, 2, 5, 3, 1, 3, 1, 8, 8, 2, 8, 2, 8, 2, 2, 1, 8, 1, 1, 1, 1, 1, 8, 1, 2, 2, 2, 2, 2,
+               1, 1, 1, 2, 1)
+
+
+
+col.names.abr <- c("PUF_CASE_ID", "PUF_FACILITY_ID", "FACILITY_TYPE_CD",  "FACILITY_LOCATION_CD", "AGE", "SEX", "RACE",
+                   "SPANISH_HISPANIC_ORIGIN", "INSURANCE_STATUS", "MED_INC_QUAR_00", "NO_HSD_QUAR_00", "UR_CD_03",
+                   "MED_INC_QUAR_12", "NO_HSD_QUAR_12", "UR_CD_13", "CROWFLY", "CDCC_TOTAL", "SEQUENCE_NUMBER",
+                   "CLASS_OF_CASE", "YEAR_OF_DIAGNOSIS", "PRIMARY_SITE",  "LATERALITY", "HISTOLOGY", "BEHAVIOR",
+                   "GRADE", "DIAGNOSTIC_CONFIRMATION", "TUMOR_SIZE", "REGIONAL_NODES_POSITIVE",
+                   "REGIONAL_NODES_EXAMINED", "DX_STAGING_PROC_DAYS", "RX_SUMM_DXSTG_PROC", "TNM_CLIN_T",
+                   "TNM_CLIN_N", "TNM_CLIN_M", "TNM_CLIN_STAGE_GROUP", "TNM_PATH_T", "TNM_PATH_N", "TNM_PATH_M",
+                   "TNM_PATH_STAGE_GROUP", "TNM_EDITION_NUMBER", "ANALYTIC_STAGE_GROUP", "CS_METS_AT_DX",
+                   "CS_METS_EVAL", "CS_EXTENSION", "CS_TUMOR_SIZEEXT_EVAL", "CS_METS_DX_BONE",
+                   "CS_METS_DX_BRAIN", "CS_METS_DX_LIVER", "CS_METS_DX_LUNG", "LYMPH_VASCULAR_INVASION",
+                   "CS_SITESPECIFIC_FACTOR_1", "CS_SITESPECIFIC_FACTOR_2", "CS_SITESPECIFIC_FACTOR_3",
+                   "CS_SITESPECIFIC_FACTOR_4", "CS_SITESPECIFIC_FACTOR_5", "CS_SITESPECIFIC_FACTOR_6",
+                   "CS_SITESPECIFIC_FACTOR_7", "CS_SITESPECIFIC_FACTOR_8", "CS_SITESPECIFIC_FACTOR_9",
+                   "CS_SITESPECIFIC_FACTOR_10", "CS_SITESPECIFIC_FACTOR_11", "CS_SITESPECIFIC_FACTOR_12",
+                   "CS_SITESPECIFIC_FACTOR_13", "CS_SITESPECIFIC_FACTOR_14", "CS_SITESPECIFIC_FACTOR_15",
+                   "CS_SITESPECIFIC_FACTOR_16", "CS_SITESPECIFIC_FACTOR_17", "CS_SITESPECIFIC_FACTOR_18",
+                   "CS_SITESPECIFIC_FACTOR_19", "CS_SITESPECIFIC_FACTOR_20", "CS_SITESPECIFIC_FACTOR_21",
+                   "CS_SITESPECIFIC_FACTOR_22", "CS_SITESPECIFIC_FACTOR_23", "CS_SITESPECIFIC_FACTOR_24",
+                   "CS_SITESPECIFIC_FACTOR_25", "CS_VERSION_LATEST", "DX_RX_STARTED_DAYS",
+                   "DX_SURG_STARTED_DAYS", "DX_DEFSURG_STARTED_DAYS", "RX_SUMM_SURG_PRIM_SITE",
+                   "RX_HOSP_SURG_APPR_2010", "RX_SUMM_SURGICAL_MARGINS", "RX_SUMM_SCOPE_REG_LN_SUR",
+                   "RX_SUMM_SURG_OTH_REGDIS", "SURG_DISCHARGE_DAYS", "READM_HOSP_30_DAYS",
+                   "REASON_FOR_NO_SURGERY", "DX_RAD_STARTED_DAYS", "RX_SUMM_RADIATION", "RAD_LOCATION_OF_RX",
+                   "RAD_TREAT_VOL", "RAD_REGIONAL_RX_MODALITY", "RAD_REGIONAL_DOSE_CGY",
+                   "RAD_BOOST_RX_MODALITY", "RAD_BOOST_DOSE_CGY", "RAD_NUM_TREAT_VOL",
+                   "RX_SUMM_SURGRAD_SEQ", "RAD_ELAPSED_RX_DAYS", "REASON_FOR_NO_RADIATION",
+                   "DX_SYSTEMIC_STARTED_DAYS", "DX_CHEMO_STARTED_DAYS", "RX_SUMM_CHEMO", 
+                   "DX_HORMONE_STARTED_DAYS", "RX_SUMM_HORMONE", "DX_IMMUNO_STARTED_DAYS",
+                   "RX_SUMM_IMMUNOTHERAPY", "RX_SUMM_TRNSPLNT_ENDO", "RX_SUMM_SYSTEMIC_SUR_SEQ",
+                   "DX_OTHER_STARTED_DAYS", "RX_SUMM_OTHER", "PALLIATIVE_CARE", "RX_SUMM_TREATMENT_STATUS",
+                   "PUF_30_DAY_MORT_CD", "PUF_90_DAY_MORT_CD", "DX_LASTCONTACT_DEATH_MONTHS",
+                   "PUF_VITAL_STATUS", "RX_HOSP_SURG_PRIM_SITE", "RX_HOSP_CHEMO", "RX_HOSP_IMMUNOTHERAPY",
+                   "RX_HOSP_HORMONE", "RX_HOSP_OTHER", "PUF_MULT_SOURCE", "REFERENCE_DATE_FLAG",
+                   "RX_SUMM_SCOPE_REG_LN_2012", "RX_HOSP_DXSTG_PROC", "PALLIATIVE_CARE_HOSP")
+
+
+#Read in data for each subsite
+bone.joint <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_BoneJont.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+brain <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Brain.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+cns <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_CNS.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+gum.ot.mth <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_GumOtMth.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+hypophar <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Hypophar.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+larynx <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Larynx.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+lip <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Lip.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+melanoma <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Melanoma.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+fom <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_MouthFlr.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+nasal <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Nasal.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+nasophar <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Nasophar.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+orophar <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Orophary.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+oth.endo <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_OtEndocr.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+skin <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_OtSkin.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+pharynx <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Pharynx.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+saliv.gland <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_SalivGld.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+thyroid <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Thyroid.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+tongue <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Tongue.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+tonsil <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_Tonsil.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+trach.med <- read_fwf('I:/Brant/Research/NCDB/Data/Data_2017/NCDB_PUF_DATA_Nov-07-2017/NCDBPUF_TrachMed.3.2015.0.dat', 
+                       fwf_widths(col.width, col_names = col.names.abr),
+                       col_types = cols(.default = col_character()))
+
+
+#Combine data for all subsites
+dat <- bind_rows(bone.joint, brain, cns, gum.ot.mth, hypophar, larynx, lip, melanoma, fom, nasal, nasophar, orophar,
+                 oth.endo, skin, pharynx, saliv.gland, thyroid, tongue, tonsil, trach.med)
+
+rm(bone.joint, brain, cns, gum.ot.mth, hypophar, larynx, lip, melanoma, fom, nasal, nasophar, orophar,
+                 oth.endo, skin, pharynx, saliv.gland, thyroid, tongue, tonsil, trach.med)
+
+prim_site_text <- data_frame(PRIMARY_SITE = c("C030", "C031", "C062", "C039", "C050", "C051", "C052", "C058", "C059", "C068",
+               "C069", "C060", "C061", "C129", "C130", "C131", "C132", "C138", "C139", "C320",
+               "C321", "C322", "C323", "C328", "C329", "C000", "C003", "C001", "C004", "C006", 
+               "C002", "C005", "C008", "C009", "C440", "C442", "C443", "C444", "C445", "C446",
+               "C447", "C448", "C449", "C441", "C040", "C041", "C048", "C049", "C300", "C301",
+               "C310", "C311", "C312", "C313", "C318", "C319", "C110", "C111", "C112", "C113",
+               "C118", "C119", "C090", "C091", "C098", "C099", "C100", "C102", "C103", "C104",
+               "C108", "C109", "C101", "C140", "C142", "C148", "C079", "C080", "C081", "C088",
+               "C089", "C739", "C019", "C024", "C020", "C021", "C022", "C023", "C028", "C029"),
+               SITE_TEXT = c("C03.0: Gum, upper", "C03.1 Gum, lower", "C06.2 Retromolar area", "C03.9 Gum, NOS",
+               "C05.0 Hard Palate", "C05.1 Soft Palate", "C05.2 Uvula", "C05.8 Overlapping lesion of palate", 
+               "C05.9 Palate NOS", "C06.8 Overlapping lesion of other an unspecified parts of mouth", 
+               "C06.9 Mouth, NOS", "C06.0 Buccal mucosa", "C06.1 Vestibule of mouth", "C12.9  Pyriform sinus", 
+               "C13.0  Postcricoid region", "C13.1  Hypopharyngeal aspect of aryepiglottic fold",
+               "C13.2  Posterior wall of hypopharynx", "C13.8  Overlapping lesion of hypopharynx",
+               "C13.9  Hypopharynx, NOS (laryngopharynx)", "C32.0  Glottis", "C32.1  Supraglottis", 
+               "C32.2  Subglottis", "C32.3  Laryngeal cartilage", "C32.8  Overlapping lesion of larynx", 
+               "C32.9  Larynx, NOS", "C00.0  External upper lip (vermilion)", "C00.3  Mucosa of upper lip",
+               "C00.1  External lower lip (vermilion)", "C00.4  Mucosa of lower lip", "C00.6  Commissure of lip",
+               "C00.2  External lip, NOS (vermilion)", "C00.5  Mucosa of lip, NOS", "C00.8  Overlapping lesion of lip", 
+               "C00.9  Lip, NOS (excludes skin of lip C44.0)", "C44.0  Skin of lip, NOS", "C44.2  External ear",
+               "C44.3  Skin of other and unspecified parts of face", "C44.4  Skin of scalp and neck",
+               "C44.5  Skin of trunk", "C44.6  Skin of upper limb and shoulder", "C44.7  Skin of lower limb and hip", 
+               "C44.8  Overlapping lesion of skin", "C44.9  Skin, NOS", "C44.1 Eyelid",
+               "C04.0  Anterior floor of mouth", "C04.1  Lateral floor of mouth", "C04.8  Overlapping lesion of floor of mouth",
+               "C04.9  Floor of mouth, NOS", "C30.0  Nasal cavity (excluding nose, NOS C76.0)", "C30.1  Middle ear",
+               "C31.0  Maxillary sinus", "C31.1  Ethmoid sinus", "C31.2  Frontal sinus", "C31.3  Sphenoid sinus",
+               "C31.8  Overlapping lesion of accessory sinuses", "C31.9  Accessory sinus, NOS",
+               "C11.0  Superior wall of nasopharynx", "C11.1  Posterior wall of nasopharynx (excluding pharyngeal tonsil)",
+               "C11.2  Lateral wall of nasopharynx", "C11.3  Anterior wall of nasopharynx",
+               "C11.8  Overlapping lesion of nasopharynx", "C11.9  Nasopharynx, NOS", "C09.0  Tonsillar fossa",
+               "C09.1  Tonsillar pillar", "C09.8  Overlapping lesion of tonsil",
+               "C09.9  Tonsil, NOS (excluding lingual tonsil C02.4)", "C10.0  Vallecula",
+               "C10.2  Lateral wall of oropharynx", "C10.3  Posterior wall of oropharynx",
+               "C10.4  Branchial cleft (site of neoplasm)", "C10.8  Overlapping lesion of oropharynx",
+               "C10.9  Oropharynx, NOS", "C10.1  Anterior surface of epiglottis", "C14.0  Pharynx, NOS",
+               "C14.2  Waldeyer ring", "C14.8  Overlapping lesion of lip, oral cavity", "C07.9  Parotid gland",
+               "C08.0  Submandibular gland", "C08.1  Sublingual gland", "C08.8  Overlapping lesion of major salivary glands",
+               "C08.9  Major salivary gland, NOS", "C73.9  Thyroid gland", "C01.9  Base of tongue, NOS",
+               "C02.4  Lingual tonsil", "C02.0  Dorsal surface of tongue, NOS", "C02.1  Border of tongue (Tip)",
+               "C02.2  Ventral surface of tongue, NOS", "C02.3  Anterior 2/3 of tongue, NOS",
+               "C02.8  Overlapping lesion of tongue", "C02.9  Tongue, NOS"),
+               CS_GROUP = c("gum_upper", "gum_lower", "gum_lower", "gum_nos", "hard_palate", "soft_palate",
+             "soft_palate", "other_mouth", "other_mouth", "other_mouth", "other_mouth",
+             "buccal", "buccal", "hypopharynx", "hypopharynx", "hypopharynx", "hypopharynx",
+             "hypopharynx", "hypopharynx", "glottis", "supraglot", "subglot", "lx_oth",
+             "lx_oth", "lx_oth", "up_lip", "up_lip", "low_lip", "low_lip", "low_lip",
+             "lip_oth", "lip_oth", "lip_oth", "lip_oth", "skin", "skin", "skin", "skin",
+             "skin", "skin", "skin", "skin", "skin", "eyelid", "fom", "fom", "fom", "fom",
+             "nasal_cavity", "mid_ear", "max_sin", "eth_sin", "oth_sin", "oth_sin",
+             "oth_sin", "oth_sin", "np", "np", "np", "np", "np", "np", "op",
+             "op", "op", "op", "op", "op", "op", "op", "op", "op", "ant_epi",
+             "oth_phary", "oth_phary", "oth_phary", "parotid", "smglnd",
+             "glnd_oth", "glnd_oth", "glnd_oth", "thyroid", "bot_lt",
+             "bot_lt", "tongue_oth", "tongue_oth", "tongue_oth", "tongue_oth",
+             "tongue_oth", "tongue_oth"))
+
+
+dat <- merge(dat, prim_site_text, by = "PRIMARY_SITE", all.x = TRUE) 
+
+rm(prim_site_text)
+
+fact_vars <- c("PRIMARY_SITE", "FACILITY_TYPE_CD", "FACILITY_LOCATION_CD", "SEX", "RACE", "SPANISH_HISPANIC_ORIGIN",
+               "INSURANCE_STATUS", "MED_INC_QUAR_00", "NO_HSD_QUAR_00", "UR_CD_03", "MED_INC_QUAR_12",
+               "NO_HSD_QUAR_12", "UR_CD_13", "CDCC_TOTAL", "SEQUENCE_NUMBER", "CLASS_OF_CASE",
+               "YEAR_OF_DIAGNOSIS", "LATERALITY", "HISTOLOGY", "BEHAVIOR",
+               "GRADE", "DIAGNOSTIC_CONFIRMATION", "REGIONAL_NODES_POSITIVE", "REGIONAL_NODES_EXAMINED",
+               "RX_SUMM_DXSTG_PROC", "TNM_CLIN_T",
+               "TNM_CLIN_N", "TNM_CLIN_M", "TNM_CLIN_STAGE_GROUP", "TNM_PATH_T", "TNM_PATH_N",
+               "TNM_PATH_M", "TNM_PATH_STAGE_GROUP", "TNM_EDITION_NUMBER", "ANALYTIC_STAGE_GROUP",
+               "CS_METS_AT_DX", "CS_METS_EVAL", "CS_EXTENSION", "CS_TUMOR_SIZEEXT_EVAL", "CS_METS_DX_BONE",
+               "CS_METS_DX_BRAIN", "CS_METS_DX_LIVER", "CS_METS_DX_LUNG", "LYMPH_VASCULAR_INVASION",
+               "CS_VERSION_LATEST", "RX_SUMM_SURG_PRIM_SITE", "RX_HOSP_SURG_APPR_2010", "RX_SUMM_SURGICAL_MARGINS",
+               "RX_SUMM_SCOPE_REG_LN_SUR", "RX_SUMM_SURG_OTH_REGDIS", "READM_HOSP_30_DAYS", "REASON_FOR_NO_SURGERY", 
+               "RX_SUMM_RADIATION",
+               "RAD_LOCATION_OF_RX", "RAD_TREAT_VOL", "RAD_REGIONAL_RX_MODALITY", "RAD_BOOST_RX_MODALITY", 
+               "RX_SUMM_SURGRAD_SEQ", "REASON_FOR_NO_RADIATION", "RX_SUMM_CHEMO", "RX_SUMM_HORMONE",
+               "RX_SUMM_IMMUNOTHERAPY", "RX_SUMM_TRNSPLNT_ENDO", "RX_SUMM_SYSTEMIC_SUR_SEQ",
+               "RX_SUMM_OTHER", "PALLIATIVE_CARE", "RX_SUMM_TREATMENT_STATUS", "PUF_30_DAY_MORT_CD",
+               "PUF_90_DAY_MORT_CD", "RX_HOSP_SURG_PRIM_SITE", "RX_HOSP_CHEMO", "RX_HOSP_IMMUNOTHERAPY",
+               "RX_HOSP_HORMONE", "RX_HOSP_OTHER", "PUF_MULT_SOURCE", "REFERENCE_DATE_FLAG",
+               "RX_SUMM_SCOPE_REG_LN_2012",   'RX_HOSP_DXSTG_PROC', 'PALLIATIVE_CARE_HOSP')
+
+dat[fact_vars] <- lapply(dat[fact_vars], as.character)
+dat[fact_vars] <- lapply(dat[fact_vars], as.factor)
+
+num_vars <- c("AGE", "CROWFLY", "TUMOR_SIZE", "DX_STAGING_PROC_DAYS", "DX_RX_STARTED_DAYS", "DX_SURG_STARTED_DAYS",
+              "DX_DEFSURG_STARTED_DAYS", "SURG_DISCHARGE_DAYS", "DX_RAD_STARTED_DAYS",  "RAD_REGIONAL_DOSE_CGY",
+              "RAD_BOOST_DOSE_CGY", "RAD_ELAPSED_RX_DAYS", "DX_SYSTEMIC_STARTED_DAYS", "DX_CHEMO_STARTED_DAYS", 
+              "DX_HORMONE_STARTED_DAYS", "DX_OTHER_STARTED_DAYS", "DX_LASTCONTACT_DEATH_MONTHS",
+              "RAD_NUM_TREAT_VOL")
+
+dat[num_vars] <- lapply(dat[num_vars], as.numeric)
+
+
+
+```
+
+
+```{r}
+p_table <- function(tab_data, ...) {
+  tab_data_2 <- deparse(substitute(tab_data))
+  
+  table_p <- do.call(CreateTableOne, 
+                     list(data = as.name(tab_data_2), includeNA = TRUE, ...))
+  table_p_out <- print(table_p,
+                       showAllLevels = TRUE,
+                       printToggle = FALSE)
+  kable(table_p_out,
+        align = "c")
+}
+```
+
+
+
+```{r}
+f_plot <- function(test_var, data_imp){
+
+                
+        cat("_________________________________________________")
+        cat("\n")
+        cat("   \n##", test_var)
+        cat("\n")
+        cat("_________________________________________________")
+        cat("\n")
+
+        
+        f <- as.formula(paste(as.name(test_var),
+                              "AGE + SEX + T_SIZE + FACILITY_TYPE_F + FACILITY_LOCATION_F + YEAR_OF_DIAGNOSIS",
+                              sep = " ~ " ))
+        
+        data_imp_2 <- deparse(substitute(data_imp))
+        
+        fit_fn <- do.call("glm", 
+                       list(formula = f, 
+                            data = as.name(data_imp_2), 
+                            family = "binomial"))
+        
+        print(summary(fit_fn))
+        
+        or <- as.data.frame(exp(coefficients(fit_fn)))
+        or$Variable <- rownames(or)
+        rownames(or) <- c()
+        names(or) <- c('OddsRatio', 'Variable')
+
+        ci <- as.data.frame(exp(confint(fit_fn)))
+        ci$Variable <- rownames(ci)
+        rownames(ci) <- c()
+
+        p_val_list <- tidy(fit_fn) %>%
+        select(term, p.value) %>%
+        rename(Variable = term) %>%
+        mutate(p.value = round(p.value, 4))
+        p_val_list$p.value <- as.character(p_val_list$p.value)
+        p_val_list$p.value[p_val_list$p.value == "0"] <- "< 0.0001"
+
+        all <- full_join(or, ci, by = 'Variable')
+        all <- full_join(all, p_val_list, by = "Variable")
+        names(all) <- c('OddsRatio', 'Variable', 'Lower', 'Upper', "p_value")
+        all <- na.omit(all)
+
+        all <- all %>%
+        filter(Variable != '(Intercept)') 
+
+
+        text <- cbind(c("Variable", as.character(all$Variable)), 
+              c("Odds Ratio", as.character(round(all$OddsRatio, 2))),
+              c("Lower CI", as.character(round(all$Lower, 2))),
+              c("Upper CI", as.character(round(all$Upper, 2))),
+              c("p Value", all$p_value))
+
+
+        forestplot(text, 
+           mean = c(NA, all$OddsRatio), 
+           lower = c(NA, all$Lower), 
+           upper = c(NA, all$Upper), 
+           new_page =   TRUE, zero = 1, 
+           clip = c(0.1, 100),
+           hrzl_lines = list("2" = gpar(col="#444444")),
+           vertices = TRUE,
+           graph.pos = 2,
+           xlab = "Odds Ratio (log)",
+           align = "c",
+           txt_gp = fpTxtGp(cex = 0.7),
+           xticks = getTicks(low = all$Lower,
+                             high = all$Upper,
+                             clip=c(-Inf, Inf),
+                             exp=TRUE),
+           boxsize = 0.1)
+    
+}
+```
+
+
+#Data 
+
+```{r}
+site_code <- c("C724")
+histo_code <- c("9560", "9570")
+behavior_code <- c("All")
+
+
+data <- dat %>%
+        #filter(BEHAVIOR %in% behavior_code) %>%
+        filter(PRIMARY_SITE %in% site_code) %>%
+        filter(HISTOLOGY %in% histo_code) %>%
+        filter(is.na(PUF_VITAL_STATUS) == FALSE) %>%
+        filter(is.na(DX_LASTCONTACT_DEATH_MONTHS) == FALSE)
+
+
+```
+
+
+
+Data including tumors of the head and neck was obtained from the NCBD on March 4, 2016. Cases that were included in this analysis were those with:
+
+1. Site codes: `r site_code`
+2. Histology codes: `r histo_code`
+3. Behavior codes: `r behavior_code`
+
+
+Patients were excluded if they didn't have values for either follow up or vital status.
+
+Patients were excluded if they had surgery to a distant site using `RX_SUMM_SURG_OTH_REGDIS`. This was done to avoid confounding of different surgical procedures. We are only interested in surgery at the primary site. These distant site surgeries were being counted in the surgery/radiation sequence and thus to simplify analysis they were removed. 
+
+```{r}
+
+data %>%
+        CreateTableOne(data = .,
+                     vars = c("RX_SUMM_SURG_OTH_REGDIS"),
+                     includeNA = TRUE) %>%
+        print(.,
+              showAllLevels = TRUE)
+
+data <- data %>%
+        filter(RX_SUMM_SURG_OTH_REGDIS == "0") 
+```
+
+
+Race was grouped as white, black, asian, other/unknown
+Stage was grouped into 0, I, II, III, IV, NA_Unknown, stage 0 was removed
+Whether surgery was performed was based on the `REASON_FOR_NO_SURGERY` variable. The `SURGERY_YN` variable was classified as 'Yes', 'No', or 'Unknown'.
+
+
+Whether radiation was performed was based on the `REASON_FOR_NO_RADIATION` variable. The `RADIATION_YN` variable was classified as 'Yes', 'No', or 'Unknown'.
+
+```{r}
+data <- data %>%
+        mutate(FACILITY_TYPE_F = fct_recode(FACILITY_TYPE_CD,
+                                            "Community Cancer Program" = "1",
+                                            "Comprehensive Comm Ca Program" = "2",
+                                            "Academic/Research Program" = "3",
+                                            "Integrated Network Ca Program" = "4",
+                                            "Other" = "9")) %>%
+        mutate(FACILITY_LOCATION_F = fct_recode(FACILITY_LOCATION_CD,
+                                            "New England" = "1",
+                                            "Middle Atlantic" = "2",
+                                            "South Atlantic" = "3",
+                                            "East North Central" = "4",
+                                            "East South Central" = "5",
+                                            "West North Central" = "6",
+                                            "West South Central" = "7",
+                                            "Mountain" = "8",
+                                            "Pacific" = "9",
+                                            "out of US" = "0")) %>%
+        mutate(FACILITY_GEOGRAPHY = fct_collapse(FACILITY_LOCATION_CD,
+                                                 "Northeast" = c("1", "2"),
+                                                 "South" = c("3", "7"),
+                                                 "Midwest" = c("4", "5", "6"),
+                                                 "West" = c("8", "9"))) %>%
+        mutate(AGE_F = cut(AGE, c(0, 54, 64, 74, 100))) %>%
+        mutate(AGE_40 = cut(AGE, c(0, 40, 100))) %>%
+        mutate(SEX_F = fct_recode(SEX, 
+                                "Male" = "1",
+                                "Female" = "2")) %>%
+        mutate(RACE_F = fct_collapse(RACE, 
+                                "White" = c("01"),
+                                "Black" = c("02"),
+                                "Asian" = c("04", "05", "06", "07", "08", "10", "11", "12", "13", "14", "15",
+                                            "16", "17", "20", "21", "22", "25", "26", "27", "28", "30", "31",
+                                            "32", "96", "97"),
+                                "Other/Unk" = c("03", "98", "99"))) %>%
+        mutate(HISPANIC = fct_collapse(SPANISH_HISPANIC_ORIGIN,
+                                       "Yes" = c("1", "2", "3", "4", "5", "6", "7", "8"),
+                                       "No" = c("0"),
+                                       "Unknown" = c("9"))) %>%
+        mutate(INSURANCE_F = fct_recode(INSURANCE_STATUS,
+                                         "None" = "0",
+                                         "Private" = "1",
+                                         "Medicaid" = "2",
+                                         "Medicare" = "3",
+                                         "Other Government" = "4",
+                                         "Unknown" = "9")) %>%
+        mutate(INSURANCE_F = fct_relevel(INSURANCE_F,
+                                         "Private")) %>%
+        mutate(INCOME_F = fct_recode(MED_INC_QUAR_12, 
+                                      "Less than $38,000" = "1",
+                                      "$38,000 - $47,999" = "2",
+                                      "$48,000 - $62,999" = "3",
+                                      "$63,000 +" = "4")) %>%
+        mutate(EDUCATION_F = fct_recode(NO_HSD_QUAR_12,
+                                        "21% or more" = "1",
+                                        "13 - 20.9%" = "2",
+                                        "7 - 12.9%" = "3",
+                                        "Less than 7%" = "4")) %>%
+        mutate(U_R_F = fct_collapse(UR_CD_13,
+                                    "Metro" = c("1", "2", "3"),
+                                    "Urban" = c("4", "5", "6", "7"),
+                                    "Rural" = c("8", "9"))) %>%
+        mutate(CLASS_OF_CASE_F = fct_collapse(CLASS_OF_CASE,
+                                              All_Part_Prim = c("10", "11", "12", "13",
+                                                                "14", "20", "21", "22"),
+                                              Other_Facility = c("00"))) %>%
+        mutate(GRADE_F = fct_recode(GRADE,
+                                  "Gr I: Well Diff" = "1",
+                                  "Gr II: Mod Diff" = "2",
+                                  "Gr III: Poor Diff" = "3",
+                                  "Gr IV: Undiff/Anaplastic" = "4",
+                                  "NA/Unkown" = "9")) %>%
+        mutate(HISTOLOGY_F = fct_infreq(HISTOLOGY)) %>%
+        mutate(HISTOLOGY_F = factor(HISTOLOGY_F)) %>%
+        mutate(HISTOLOGY_F_LIM = fct_lump(HISTOLOGY_F, prop = 0.05)) %>%
+        mutate(TNM_CLIN_T = fct_recode(TNM_CLIN_T,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_CLIN_T = fct_relevel(TNM_CLIN_T,
+                                        "1")) %>%
+        mutate(TNM_CLIN_N = fct_recode(TNM_CLIN_N,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_CLIN_M = fct_recode(TNM_CLIN_M,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_PATH_T = fct_recode(TNM_PATH_T,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_PATH_T = fct_relevel(TNM_PATH_T,
+                                        "1")) %>%
+        mutate(TNM_PATH_N = fct_recode(TNM_PATH_N,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_PATH_M = fct_recode(TNM_PATH_M,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_CLIN_STAGE_GROUP = fct_recode(TNM_CLIN_STAGE_GROUP,
+                                       "N_A" = "88")) %>%
+        mutate(TNM_PATH_STAGE_GROUP = fct_recode(TNM_PATH_STAGE_GROUP,
+                                       "N_A" = "88")) %>%
+        mutate(MARGINS = fct_recode(RX_SUMM_SURGICAL_MARGINS,
+                                    "No Residual" = "0",
+                                    "Residual, NOS" = "1",
+                                    "Microscopic Resid" = "2",
+                                    "Macroscopic Resid" = "3",
+                                    "Not evaluable" = "7",
+                                    "No surg" = "8",
+                                    "Unknown" = "9")) %>%
+        mutate(MARGINS_YN = fct_collapse(RX_SUMM_SURGICAL_MARGINS,
+                                         "Yes" = c("1", "2", "3"),
+                                         "No" = c("0"),
+                                         "No surg/Unk/NA" = c("7", "8", "9"))) %>%
+        mutate(READM_HOSP_30_DAYS_F = fct_recode(READM_HOSP_30_DAYS,
+                                                 "No_Surg_or_No_Readmit" = "0",
+                                                 "Unplan_Readmit_Same" = "1",
+                                                 "Plan_Readmit_Same" = "2",
+                                                 "PlanUnplan_Same" = "3",
+                                                 "Unknown" = "4")) %>%
+        mutate(RX_SUMM_RADIATION_F = fct_recode(RX_SUMM_RADIATION,
+                                                "None" = "0",
+                                                "Beam Radiation" = "1",
+                                                "Radioactive Implants" = "2",
+                                                "Radioisotopes" = "3",
+                                                "Beam + Imp or Isotopes" = "4",
+                                                "Radiation, NOS" = "5",
+                                                "Unknown" = "9")) %>%
+        mutate(PUF_30_DAY_MORT_CD_F = fct_recode(PUF_30_DAY_MORT_CD,
+                                                 "Alive_30" = "0",
+                                                 "Dead_30" = "1",
+                                                 "Unknown" = "9")) %>%
+        mutate(PUF_90_DAY_MORT_CD_F = fct_recode(PUF_90_DAY_MORT_CD,
+                                                 "Alive_90" = "0",
+                                                 "Dead_90" = "1",
+                                                 "Unknown" = "9")) %>%
+        mutate(LYMPH_VASCULAR_INVASION_F = fct_recode(LYMPH_VASCULAR_INVASION,
+                                                      "Neg_LymphVasc_Inv" = "0",
+                                                      "Pos_LumphVasc_Inv" = "1",
+                                                      "N_A" = "8",
+                                                      "Unknown" = "9")) %>%
+        mutate(RX_HOSP_SURG_APPR_2010_F = fct_recode(RX_HOSP_SURG_APPR_2010,
+                                                     "No_Surg" = "0",
+                                                     "Robot_Assist" = "1",
+                                                     "Robot_to_Open" = "2",
+                                                     "Endo_Lap" = "3",
+                                                     "Endo_Lap_to_Open" = "4",
+                                                     "Open_Unknown" = "5",
+                                                     "Unknown" = "9")) %>%
+        mutate(All = "All") %>%
+        mutate(All = factor(All)) %>%
+        mutate(REASON_FOR_NO_SURGERY_F = fct_recode(REASON_FOR_NO_SURGERY,
+                                                    "Surg performed" = "0",
+                                                    "Surg not recommended" = "1",
+                                                    "No surg due to pt factors" = "2",
+                                                    "No surg, pt died" = "5",
+                                                    "Surg rec, not done" = "6",
+                                                    "Surg rec, pt refused" = "7",
+                                                    "Surg rec, unk if done" = "8",
+                                                    "Unknown" = "9")) %>%
+        mutate(SURGERY_YN = ifelse(REASON_FOR_NO_SURGERY == "0",
+                                   "Yes",
+                                   ifelse(REASON_FOR_NO_SURGERY == "9",
+                                          "Ukn",
+                                          "No"))) %>%
+        mutate(REASON_FOR_NO_RADIATION_F = fct_recode(REASON_FOR_NO_RADIATION,
+                                                    "Rad performed" = "0",
+                                                    "Rad not recommended" = "1",
+                                                    "No Rad due to pt factors" = "2",
+                                                    "No Rad, pt died" = "5",
+                                                    "Rad rec, not done" = "6",
+                                                    "Rad rec, pt refused" = "7",
+                                                    "Rad rec, unk if done" = "8",
+                                                    "Unknown" = "9")) %>%
+        mutate(RADIATION_YN = ifelse(REASON_FOR_NO_RADIATION == "0",
+                                   "Yes",
+                                   ifelse(REASON_FOR_NO_RADIATION == "9",
+                                          "Ukn",
+                                          "No"))) %>%
+        mutate(SURGRAD_SEQ_F = fct_recode(RX_SUMM_SURGRAD_SEQ,
+                                                   "None or Surg or Rad" = "0",
+                                                   "Rad before Surg" = "2",
+                                                   "Surg before Rad" = "3",
+                                                   "Rad before and after Surg" = "4",
+                                                   "Intraop Rad" = "5",
+                                                   "Intraop Rad plus other" = "6",
+                                                   "Unknown" = "9")) %>%
+        mutate(SURG_RAD_SEQ = ifelse(SURGERY_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0",
+                                     "Surg Alone",
+                                     ifelse(RADIATION_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0",
+                                            "Rad Alone",
+                                            ifelse(SURGERY_YN == "No" & RADIATION_YN == "No" & RX_SUMM_SURGRAD_SEQ == "0",
+                                                   "No Treatement",
+                                                   ifelse(RX_SUMM_SURGRAD_SEQ == "2",
+                                                          "Rad then Surg",
+                                                          ifelse(RX_SUMM_SURGRAD_SEQ == "3",
+                                                                 "Surg then Rad",
+                                                                 ifelse(RX_SUMM_SURGRAD_SEQ == "4",
+                                                                        "Rad before and after Surg",
+                                                                        "Other"))))))) %>%
+        mutate(SURG_RAD_SEQ = fct_relevel(SURG_RAD_SEQ,
+                                          "Surg Alone", 
+                                          "Surg then Rad",
+                                          "Rad Alone")) %>%
+        mutate(CHEMO_YN = fct_collapse(RX_SUMM_CHEMO,
+                                       "No" = c("00", "82", "85", "86", "87"),
+                                       "Yes" = c("01", "02", "03"),
+                                       "Ukn" = c("88", "99"))) %>%
+        mutate(SURG_RAD_SEQ_C = ifelse(SURGERY_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "No",
+                                     "Surg, No rad, No Chemo",
+                                     ifelse(RADIATION_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "No",
+                                            "Rad, No Surg, No Chemo",
+                                            ifelse(SURGERY_YN == "No" & RADIATION_YN == "No" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "No",
+                                                   "No Surg, No Rad, No Chemo",
+                                                   ifelse(RX_SUMM_SURGRAD_SEQ == "2" & CHEMO_YN == "No",
+                                                          "Rad then Surg, No Chemo",
+                                                          ifelse(RX_SUMM_SURGRAD_SEQ == "3" & CHEMO_YN == "No",
+                                                                 "Surg then Rad, No Chemo",
+                                                                 ifelse(RX_SUMM_SURGRAD_SEQ == "4" & CHEMO_YN == "No",
+                                                                        "Rad before and after Surg, No Chemo",
+                                ifelse(SURGERY_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "Yes",
+                                       "Surg, No rad, Yes Chemo",
+                                       ifelse(RADIATION_YN == "Yes" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "Yes",
+                                              "Rad, No Surg, Yes Chemo",
+                                              ifelse(SURGERY_YN == "No" & RADIATION_YN == "No" & RX_SUMM_SURGRAD_SEQ == "0" & CHEMO_YN == "Yes",
+                                                     "No Surg, No Rad, Yes Chemo",
+                                                     ifelse(RX_SUMM_SURGRAD_SEQ == "2" & CHEMO_YN == "Yes",
+                                                            "Rad then Surg, Yes Chemo",
+                                                            ifelse(RX_SUMM_SURGRAD_SEQ == "3" & CHEMO_YN == "Yes",
+                                                                   "Surg then Rad, Yes Chemo",
+                                                                   ifelse(RX_SUMM_SURGRAD_SEQ == "4" & CHEMO_YN == "Yes",
+                                                                          "Rad before and after Surg, Yes Chemo",
+                                                                          "Other"))))))))))))) %>%
+        mutate(SURG_RAD_SEQ_C = fct_infreq(SURG_RAD_SEQ_C)) %>% 
+        mutate(T_SIZE = as.numeric(TUMOR_SIZE)) %>%
+        mutate(T_SIZE = ifelse(T_SIZE == 0,
+                                "No Tumor",
+                                ifelse(T_SIZE > 0 & T_SIZE < 10 | T_SIZE == 991,
+                                       "< 1 cm",
+                                       ifelse(T_SIZE >= 10 & T_SIZE < 20 | T_SIZE == 992,
+                                              "1-2 cm",
+                                              ifelse(T_SIZE >= 20 & T_SIZE < 30 | T_SIZE == 993,
+                                                     "2-3 cm",
+                                                     ifelse(T_SIZE >= 30 & T_SIZE < 40 | T_SIZE == 994,
+                                                            "3-4 cm",
+                                                            ifelse(T_SIZE >= 40 & T_SIZE < 50 | T_SIZE == 995,
+                                                                   "4-5 cm",
+                                                                   ifelse(T_SIZE >= 50 & T_SIZE < 60 | T_SIZE == 996,
+                                                                          "5-6 cm",
+                                                                          ifelse(T_SIZE >= 60 & T_SIZE <= 987 | 
+                                                                                         T_SIZE == 980 | T_SIZE == 989 | 
+                                                                                         T_SIZE == 997,
+                                                                          ">6 cm",
+                                                                          ifelse(T_SIZE == 988 | T_SIZE == 999,
+                                                                                 "NA_unk",
+                                                                                 "Microscopic focus")))))))))) %>%
+        mutate(T_SIZE = factor(T_SIZE)) %>%
+        mutate(T_SIZE = fct_relevel(T_SIZE,
+                                     "No Tumor", "Microscopic focus", "< 1 cm", "1-2 cm", "2-3 cm", "3-4 cm", 
+                                       "4-5 cm", "5-6 cm", ">6 cm", "NA_unk")) %>%
+        mutate(mets_at_dx = case_when(CS_METS_DX_LUNG == "1" ~ "Lung",
+                                      CS_METS_DX_BONE == "1" ~ "Bone",
+                                      CS_METS_DX_BRAIN == "1" ~ "Brain",
+                                      CS_METS_DX_LIVER == "1" ~ "Liver",
+                                      TRUE ~ "None/Other/Unk/NA"))
+
+
+fact_vars_2 <- c("FACILITY_TYPE_F", "FACILITY_LOCATION_F", "AGE_F", "SEX_F", "RACE_F",
+                 "HISPANIC", "INSURANCE_F", "INCOME_F", "EDUCATION_F", "U_R_F", "SITE_TEXT",
+                 "CDCC_TOTAL", "CLASS_OF_CASE_F", "YEAR_OF_DIAGNOSIS", "PRIMARY_SITE", "HISTOLOGY",
+                 "BEHAVIOR", "GRADE_F", "TNM_CLIN_T", "TNM_CLIN_N", "TNM_CLIN_M",
+                 "TNM_CLIN_STAGE_GROUP", "TNM_PATH_T", "TNM_PATH_N", "TNM_PATH_M", "TNM_PATH_STAGE_GROUP",
+                 "MARGINS", "READM_HOSP_30_DAYS_F", "RX_SUMM_RADIATION_F", "PUF_30_DAY_MORT_CD_F",
+                 "PUF_90_DAY_MORT_CD_F", "LYMPH_VASCULAR_INVASION_F", "RX_HOSP_SURG_APPR_2010_F", "mets_at_dx")
+
+
+data <- data %>%
+        mutate_at(fact_vars_2, funs(factor(.))) 
+                
+        
+
+
+```
+
+
+##Table of variables for all cases:
+
+```{r}
+
+p_table(data,
+        vars = c("FACILITY_TYPE_F", "FACILITY_LOCATION_F", "FACILITY_GEOGRAPHY",  "AGE", "AGE_F", "AGE_40",
+                 "SEX_F", "RACE_F", "HISPANIC", "INSURANCE_F", 
+                 "INCOME_F", "EDUCATION_F", "U_R_F", "CROWFLY", "CDCC_TOTAL",
+                 "PRIMARY_SITE", "HISTOLOGY_F_LIM", "HISTOLOGY_F", "BEHAVIOR", "GRADE_F",
+                 "DX_STAGING_PROC_DAYS", "TNM_CLIN_T", "TNM_CLIN_N", "TNM_CLIN_M",
+                 "TNM_CLIN_STAGE_GROUP", "TNM_PATH_T", "TNM_PATH_N", "TNM_PATH_M",
+                 "TNM_PATH_STAGE_GROUP", "DX_RX_STARTED_DAYS", "DX_SURG_STARTED_DAYS",
+                 "DX_DEFSURG_STARTED_DAYS", "MARGINS", "MARGINS_YN", "SURG_DISCHARGE_DAYS",
+                 "READM_HOSP_30_DAYS_F", "RX_SUMM_RADIATION_F", "PUF_30_DAY_MORT_CD_F",
+                 "PUF_90_DAY_MORT_CD_F", "DX_LASTCONTACT_DEATH_MONTHS", 
+                 "LYMPH_VASCULAR_INVASION_F", "RX_HOSP_SURG_APPR_2010_F", "SURG_RAD_SEQ",
+                 "SURG_RAD_SEQ_C", "T_SIZE", "SURGERY_YN", "RADIATION_YN", "CHEMO_YN", "mets_at_dx"))
+
+```
+
+##Treatment by Year
+
+```{r}
+p_table(data,
+        vars = c("SURG_RAD_SEQ"),
+        strata = c("YEAR_OF_DIAGNOSIS"))
+
+data %>%
+    ggplot(aes(x = YEAR_OF_DIAGNOSIS)) + 
+    geom_histogram(stat = "count", aes(fill = SURG_RAD_SEQ))
+
+data %>%
+    ggplot(aes(x = YEAR_OF_DIAGNOSIS)) + 
+    geom_histogram(stat = "count", aes(fill = SURG_RAD_SEQ), position = "fill")
+```
+
+
+##Treatment by region
+
+```{r}
+p_table(data,
+        vars = c("SURG_RAD_SEQ"),
+        strata = c("FACILITY_LOCATION_F"))
+```
+
+##Demographics by region
+
+```{r}
+p_table(data,
+        vars = c("AGE_F", "RACE_F", "SEX_F", "INCOME_F", "EDUCATION_F", "INSURANCE_F", "U_R_F"),
+        strata = c("FACILITY_LOCATION_F"))
+```
+
+
+##Treatment by tumor size
+
+
+```{r}
+p_table(data,
+        vars = c("SURG_RAD_SEQ"),
+        strata = c("T_SIZE"))
+
+data %>%
+    ggplot(aes(x = T_SIZE)) + 
+    geom_histogram(stat = "count", aes(fill = SURG_RAD_SEQ))
+
+data %>%
+    ggplot(aes(x = T_SIZE)) + 
+    geom_histogram(stat = "count", aes(fill = SURG_RAD_SEQ), position = "fill")
+```
+
+
+#Tumor size by year
+Limited to below 10 cm to exclude recording errors
+
+```{r}
+data <- data %>%
+        mutate(TUMOR_SIZE_LIM = ifelse(TUMOR_SIZE < 100,
+                                       TUMOR_SIZE,
+                                        NA)) %>%
+        mutate(T_SIZE_LIM = fct_recode(T_SIZE,
+                                       NULL = "NA_unk"))
+
+p_table(data,
+        vars = c("TUMOR_SIZE", "TUMOR_SIZE_LIM", "T_SIZE_LIM"),
+        strata = c("YEAR_OF_DIAGNOSIS"))
+
+data %>%
+        mutate(YEAR = as.numeric(as.character(YEAR_OF_DIAGNOSIS))) %>%
+        lm(TUMOR_SIZE_LIM ~ YEAR,
+              data = .) %>%
+        summary()
+
+data %>%
+    ggplot(aes(x = TUMOR_SIZE_LIM)) +
+    geom_histogram() +
+    facet_wrap(~ YEAR_OF_DIAGNOSIS)
+
+data %>%
+    ggplot(aes(x = YEAR_OF_DIAGNOSIS, y = TUMOR_SIZE_LIM)) + 
+    geom_boxplot() 
+
+data %>%
+        ggplot(aes(x = YEAR_OF_DIAGNOSIS)) + 
+        geom_histogram(stat = "count",
+                       aes(fill = T_SIZE_LIM))
+
+data %>%
+        ggplot(aes(x = YEAR_OF_DIAGNOSIS)) + 
+        geom_histogram(stat = "count",
+                       aes(fill = T_SIZE_LIM),
+                       position = "fill")
+```
+
+#Treatment models
+```{r}
+data <- data %>% 
+        mutate(FACILITY_LOCATION_F = fct_relevel(FACILITY_LOCATION_F,
+                                             "New England")) %>%
+        mutate(SURG_TX = case_when(SURGERY_YN == "Yes" ~ TRUE,
+                                   SURGERY_YN == "No" ~ FALSE,
+                                   TRUE ~ NA)) %>%
+        mutate(YEAR_OF_DIAGNOSIS = fct_relevel(YEAR_OF_DIAGNOSIS,
+                                               "2014"))
+
+fit_surg <- glm(SURG_TX ~ AGE + SEX + CDCC_TOTAL + T_SIZE + FACILITY_TYPE_F + FACILITY_LOCATION_F +
+                        YEAR_OF_DIAGNOSIS,
+                family = "binomial",
+                data = data)
+
+summary(fit_surg)
+```
+
+```{r}
+exp(cbind("Odds ratio" = coef(fit_surg), confint.default(fit_surg, level = 0.95)))
+```
+
+
+#Kaplan Meier Analysis
+
+
+```{r}
+uni_var <- function(test_var, data_imp) {
+
+                
+        cat("_________________________________________________")
+        cat("\n")
+        cat("   \n##", test_var)
+        cat("\n")
+        cat("_________________________________________________")
+        cat("\n")
+
+        
+        f <- as.formula(paste("Surv(DX_LASTCONTACT_DEATH_MONTHS, PUF_VITAL_STATUS == 0)",
+                              as.name(test_var),
+                              sep = " ~ " ))
+        
+        data_imp_2 <- deparse(substitute(data_imp))
+
+        km_fit <- do.call("survfit", list(formula = f, data = as.name(data_imp_2)))
+
+        print(km_fit)
+        cat("\n")
+
+        print(summary(km_fit, times = c(12, 24, 36, 48, 60, 120)))
+        cat("\n")
+
+
+        cat("\n")
+        cat("\n")
+        cat("   \n## Univariable Cox Proportional Hazard Model for: ", test_var)
+        cat("\n")
+        cat("\n")
+
+
+        n_levels <- nlevels(data_imp[[test_var]])
+
+        if(n_levels == 1){
+                print("Only one level, no Cox model performed")
+                cat("\n")
+
+        } else {
+
+
+                cox_fit <- do.call("coxph", list(formula = f, data = as.name(data_imp_2)))
+
+                print(summary(cox_fit))
+                cat("\n")
+                
+                do.call("ggforest",
+                         list(model = cox_fit, data = as.name(data_imp_2)))
+
+
+        }
+
+        cat("\n")
+        cat("\n")
+        cat("\n")
+        cat("   \n## Unadjusted Kaplan Meier Overall Survival Curve for: ", test_var)
+
+
+        p <- do.call("ggsurvplot",
+                     list(fit = km_fit, data = as.name(data_imp_2),
+                          palette = "jco", censor = FALSE, legend = "right",
+                          linetype = "strata", xlab = "Time (Months)"))
+
+        print(p)
+
+}
+```
+
+##All
+
+```{r}
+uni_var(test_var = "All", data_imp = data)
+```
+
+##Facility Type
+```{r}
+uni_var(test_var = "FACILITY_TYPE_F", data_imp = data)
+```
+
+##Facility Location
+
+```{r}
+uni_var(test_var = "FACILITY_LOCATION_F", data_imp = data)
+```
+
+##Facility Geography
+
+```{r}
+uni_var(test_var = "FACILITY_GEOGRAPHY", data_imp = data)
+```
+
+##Age Group
+
+```{r}
+uni_var(test_var = "AGE_F", data_imp = data)
+```
+
+##Age Group
+
+```{r}
+uni_var(test_var = "AGE_40", data_imp = data)
+```
+
+##Gender
+
+```{r}
+uni_var(test_var = "SEX_F", data_imp = data)
+```
+
+##RACE_F
+
+```{r}
+uni_var(test_var = "RACE_F", data_imp = data)
+```
+
+##Hispanic
+
+```{r}
+uni_var(test_var = "HISPANIC", data_imp = data)
+```
+
+##Insurance Status
+
+```{r}
+uni_var(test_var = "INSURANCE_F", data_imp = data)
+```
+
+##Income
+
+```{r}
+uni_var(test_var = "INCOME_F", data_imp = data)
+```
+
+##Education
+
+```{r}
+uni_var(test_var = "EDUCATION_F", data_imp = data)
+```
+
+##Urban/Rural
+
+```{r}
+uni_var(test_var = "U_R_F", data_imp = data)
+```
+
+##Comorbidities
+
+```{r}
+uni_var(test_var = "CDCC_TOTAL", data_imp = data)
+```
+
+##Class (treatment at performing facility)
+
+```{r}
+uni_var(test_var = "CLASS_OF_CASE_F", data_imp = data)
+```
+
+##Year
+
+```{r}
+uni_var(test_var = "YEAR_OF_DIAGNOSIS", data_imp = data)
+```
+
+##Primary Site
+
+```{r}
+#uni_var(test_var = "SITE_TEXT", data_imp = data)
+```
+
+
+##Histology
+
+```{r}
+uni_var(test_var = "HISTOLOGY_F_LIM", data_imp = data)
+```
+
+##Behavior
+
+```{r}
+uni_var(test_var = "BEHAVIOR", data_imp = data)
+```
+
+##Grade
+
+```{r}
+uni_var(test_var = "GRADE_F", data_imp = data)
+```
+
+##Clinical T Stage
+
+```{r}
+uni_var(test_var = "TNM_CLIN_T", data_imp = data)
+```
+
+##Clinical N Stage
+
+```{r}
+uni_var(test_var = "TNM_CLIN_N", data_imp = data)
+```
+
+##Clinical M Stage
+
+```{r}
+uni_var(test_var = "TNM_CLIN_M", data_imp = data)
+```
+
+##Clinical Stage Group
+
+```{r}
+uni_var(test_var = "TNM_CLIN_STAGE_GROUP", data_imp = data)
+```
+
+##Pathologic T Stage
+
+```{r}
+uni_var(test_var = "TNM_PATH_T", data_imp = data)
+```
+
+##Pathologic N Stage
+
+```{r}
+uni_var(test_var = "TNM_PATH_N", data_imp = data)
+```
+
+##Pathologic M Stage
+
+```{r}
+uni_var(test_var = "TNM_PATH_M", data_imp = data)
+```
+
+##Pathologic Stage Group
+
+```{r}
+uni_var(test_var = "TNM_PATH_STAGE_GROUP", data_imp = data)
+```
+
+##Margins
+```{r}
+uni_var(test_var = "MARGINS", data_imp = data)
+```
+
+##Margins Yes/No
+```{r}
+#uni_var(test_var = "MARGINS_YN", data_imp = data)
+```
+
+##30 Day Readmission
+
+```{r}
+uni_var(test_var = "READM_HOSP_30_DAYS_F", data_imp = data)
+```
+
+##Radiation Type
+
+```{r}
+uni_var(test_var = "RX_SUMM_RADIATION_F", data_imp = data)
+```
+
+
+##Lymphovascular Invasion
+
+```{r}
+uni_var(test_var = "LYMPH_VASCULAR_INVASION_F", data_imp = data)
+```
+
+##Endoscopic/Robotic
+
+```{r}
+uni_var(test_var = "RX_HOSP_SURG_APPR_2010_F", data_imp = data)
+```
+
+##Surgery Radiation Sequence 
+
+```{r}
+uni_var(test_var = "SURG_RAD_SEQ", data_imp = data)
+```
+
+##Surgery Yes/No
+
+```{r}
+uni_var(test_var = "SURGERY_YN", data_imp = data)
+```
+
+##Radiation Yes/No
+
+```{r}
+uni_var(test_var = "RADIATION_YN", data_imp = data)
+```
+
+##Chemo Yes/No
+
+```{r}
+uni_var(test_var = "CHEMO_YN", data_imp = data)
+```
+
+
+##Tumor Size
+
+```{r}
+uni_var(test_var = "T_SIZE", data_imp = data)
+```
+
+#Tumor specific Variables
+
+
+###Node Size
+
+
+#Cox Proportional Hazard Ratio
+
+##Model #1
+
+###Full analysis
+
+```{r}
+model_one <- coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, PUF_VITAL_STATUS == 0)
+                     ~ SURG_RAD_SEQ + INSURANCE_F + AGE + SEX_F + RACE_F + INCOME_F + U_R_F + CDCC_TOTAL +
+                      FACILITY_TYPE_F + FACILITY_LOCATION_F + EDUCATION_F + T_SIZE,
+                     data = data)
+model_one %>% summary()
+
+
+```
+
+###Summary of Model
+
+```{r}
+model_one %>%
+        tidy(., exponentiate = TRUE) %>%
+        select(term, estimate, conf.low, conf.high, p.value) %>%
+        rename(Variable = term,
+               Hazard_Ratio = estimate) %>%
+        tbl_df %>%
+        print(n = nrow(.))
+
+```
+
+
+```{r}
+lm(TUMOR_SIZE ~ SURG_RAD_SEQ + INSURANCE_F + AGE + SEX_F + RACE_F + INCOME_F + U_R_F + CDCC_TOTAL +
+                      FACILITY_TYPE_F + FACILITY_LOCATION_F + EDUCATION_F,
+   data = data) %>%
+    summary()
+```
+
+
+```{r}
+# f_plot <- function(data_imp, test_var, dep_vars){
+# 
+#                 
+#         cat("_________________________________________________")
+#         cat("\n")
+#         cat("   \n##", test_var)
+#         cat("\n")
+#         cat("_________________________________________________")
+#         cat("\n")
+# 
+#         
+#         f <- as.formula(paste(as.name(test_var),
+#                               Need vars,
+#                               sep = " ~ " ))
+#         
+#         data_imp_2 <- deparse(substitute(data_imp))
+#         
+#         fit_fn <- do.call("glm", 
+#                        list(formula = f, 
+#                             data = as.name(data_imp_2), 
+#                             family = "binomial"))
+#         
+#         print(summary(fit_fn))
+#         
+#         or <- as.data.frame(exp(coefficients(fit_fn)))
+#         or$Variable <- rownames(or)
+#         rownames(or) <- c()
+#         names(or) <- c('OddsRatio', 'Variable')
+# 
+#         ci <- as.data.frame(exp(confint(fit_fn)))
+#         ci$Variable <- rownames(ci)
+#         rownames(ci) <- c()
+# 
+#         p_val_list <- tidy(fit_fn) %>%
+#         select(term, p.value) %>%
+#         rename(Variable = term) %>%
+#         mutate(p.value = round(p.value, 4))
+#         p_val_list$p.value <- as.character(p_val_list$p.value)
+#         p_val_list$p.value[p_val_list$p.value == "0"] <- "< 0.0001"
+# 
+#         all <- full_join(or, ci, by = 'Variable')
+#         all <- full_join(all, p_val_list, by = "Variable")
+#         names(all) <- c('OddsRatio', 'Variable', 'Lower', 'Upper', "p_value")
+#         all <- na.omit(all)
+# 
+#         all <- all %>%
+#         filter(Variable != '(Intercept)') 
+# 
+# 
+#         text <- cbind(c("Variable", as.character(all$Variable)), 
+#               c("Odds Ratio", as.character(round(all$OddsRatio, 2))),
+#               c("Lower CI", as.character(round(all$Lower, 2))),
+#               c("Upper CI", as.character(round(all$Upper, 2))),
+#               c("p Value", all$p_value))
+# 
+# 
+#         forestplot(text, 
+#            mean = c(NA, all$OddsRatio), 
+#            lower = c(NA, all$Lower), 
+#            upper = c(NA, all$Upper), 
+#            new_page =   TRUE, zero = 1, 
+#            clip = c(0.1, 100),
+#            hrzl_lines = list("2" = gpar(col="#444444")),
+#            vertices = TRUE,
+#            graph.pos = 2,
+#            xlab = "Odds Ratio (log)",
+#            align = "c",
+#            txt_gp = fpTxtGp(cex = 0.7),
+#            xticks = getTicks(low = all$Lower,
+#                              high = all$Upper,
+#                              clip=c(-Inf, Inf),
+#                              exp=TRUE),
+#            boxsize = 0.1)
+#     
+#}
+```
+
+
+#Session Info
+```{r}
+print(sessionInfo())
+```
