@@ -24,7 +24,9 @@ title: "Other Projects"
 
 ##CI Database
 
-7. [2018-08-23 CI Database Age](../20180823_CI_Age.nb.html)
+1. [2018-08-23 CI Database Age](../20180823_CI_Age.nb.html)
+
+2. [2018-09-20 CI Database Age](../20180920_CI_Age.nb.html)
 
 ##PANQOL
 
