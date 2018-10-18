@@ -46,6 +46,10 @@ title: "NCDB"
 
 1. [2018-03-25 Chordoma](../20180325_chordoma_2015.nb.html)
 
+###Discrepancies
+
+1. [2018-03-25 Discrepancies](../20181018_disparities_all.nb.html)
+
 ###Hemangiopericytoma
 
 1. [2018-06-18 Hemangiopericytoma](../20180618_Hemangiopericytoma.nb.html) 
