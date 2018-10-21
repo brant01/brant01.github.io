@@ -48,7 +48,9 @@ title: "NCDB"
 
 ###Discrepancies
 
-1. [2018-03-25 Discrepancies](../20181018_disparities_all.nb.html)
+1. [2018-10-18 Discrepancies](../20181018_disparities_all.nb.html)
+
+2. [2018-10-21 Discrepancies](../20181021_disparities_all.nb.html)
 
 ###Hemangiopericytoma
 
@@ -56,7 +58,7 @@ title: "NCDB"
 
 2. [2018-08-22 Hemangiopericytoma](../20180822_Hemangiopericytoma.nb.html) 
 
-2. [2018-08-24 Hemangiopericytoma](../20180824_Hemangiopericytoma.nb.html) 
+3. [2018-08-24 Hemangiopericytoma](../20180824_Hemangiopericytoma.nb.html) 
 
 ###Meningioma
 
@@ -72,7 +74,7 @@ title: "NCDB"
 
 6. [2018-08-24 Meningioma](../20180824_Meningioma_2015.nb.html)
 
-6. [2018-08-25 Meningioma](../20180825_Meningioma_2015.nb.html)
+7. [2018-08-25 Meningioma](../20180825_Meningioma_2015.nb.html)
 
 ###Pituitary Adenoma
 
