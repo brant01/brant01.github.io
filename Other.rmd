@@ -22,6 +22,10 @@ title: "Other Projects"
 7. [2018-08-12 Becker Pain Analysis](../20180822_multi.nb.html)
 
 
+##Chalian Flap Project
+
+1. [2018-10-21 Chalian Flap](../20181021_Flap_RedCap.nb.html)
+
 ##CI Database
 
 1. [2018-08-23 CI Database Age](../20180823_CI_Age.nb.html)
