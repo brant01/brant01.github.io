@@ -26,6 +26,8 @@ title: "Other Projects"
 
 1. [2018-10-18 Chalian Flap](../20181018_Flap_RedCap.nb.html)
 
+2. [2018-10-23 Chalian Flap](../20181023_Flap_RedCap.nb.html)
+
 ##CI Database
 
 1. [2018-08-23 CI Database Age](../20180823_CI_Age.nb.html)
