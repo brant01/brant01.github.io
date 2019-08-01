@@ -3,7 +3,9 @@ title: "Other Projects"
 ---
 
 
+##AERD
 
+1. [2019-07-31 AERD](../20190731_AERD.nb.html)
 
 ##Becker Pain Project
 
