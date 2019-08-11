@@ -19,6 +19,10 @@ title: "NCDB"
 
 ##Analysis
 
+###ACA Expansion and SSC
+
+1. [2019-08-11 ACA and SSC](../20190811_SSC_Insurance.nb.html)
+
 ###Acoustic Neuroma
 
 1. [2018-01-17 Acoustic Neuroma](../20180127_AN_2015.nb.html)
